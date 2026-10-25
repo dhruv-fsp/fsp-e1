@@ -24,6 +24,7 @@
   }
   :root{
     --fsp-blue:#1450e6; --fsp-ink:#0a0e16; --fsp-lime:#c8f04a;
+    --accent:#c8f04a;                               /* follows the colourway's accent */
     --text:#fff; --muted:rgba(255,255,255,.72); --dim:rgba(255,255,255,.46); --line:rgba(255,255,255,.18);
     --font:'FSP Archivo',Archivo,system-ui,-apple-system,'Segoe UI',sans-serif;
     --mono:'FSP Mono','Azeret Mono',ui-monospace,Menlo,Consolas,monospace;
@@ -77,9 +78,9 @@
   /* title */
   .intro{position:absolute;left:var(--gx);top:calc(var(--gy) + var(--st) + 84px)}
   .kicker{display:inline-flex;align-items:center;gap:10px;color:var(--muted)}
-  .kicker::before{content:"";width:8px;height:8px;background:var(--fsp-lime)}
+  .kicker::before{content:"";width:8px;height:8px;background:var(--accent)}
   .intro h1{font-weight:200;text-transform:lowercase;letter-spacing:-.06em;line-height:.9;font-size:clamp(40px,4.6vw,76px);margin-top:12px}
-  .intro h1 .accent{color:var(--fsp-lime)}
+  .intro h1 .accent{color:var(--accent)}
 
   /* the giant livery name the boat sits in front of */
   .word{position:absolute;left:0;right:0;top:var(--word-y);transform:translateY(-50%);display:flex;justify-content:center;
@@ -93,7 +94,7 @@
   /* livery info, bottom left */
   .info{position:absolute;left:var(--gx);bottom:calc(var(--gy) + var(--sb) + var(--dock-h) + 22px);max-width:min(380px,32vw)}
   .info .count{display:flex;align-items:center;gap:10px;color:var(--muted)}
-  .info .count b{color:var(--fsp-lime);font-weight:500}
+  .info .count b{color:var(--accent);font-weight:500}
   .info .count i{display:block;width:34px;height:1px;background:var(--line)}
   .info .name{font-weight:500;font-size:clamp(22px,1.9vw,30px);letter-spacing:-.02em;line-height:1.1;margin:10px 0 8px}
   .info .desc{color:var(--muted);font-size:14px;line-height:1.5}
@@ -119,7 +120,7 @@
   .dock .slider{position:absolute;top:6px;left:0;height:calc(100% - 12px);border-radius:11px;
     background:#fff;box-shadow:0 6px 18px rgba(4,12,48,.3);z-index:0;
     transition:transform .38s cubic-bezier(.34,0,.18,1), width .38s cubic-bezier(.34,0,.18,1)}
-  .dock .slider::after{content:"";position:absolute;left:14px;right:14px;bottom:-1px;height:3px;border-radius:3px;background:var(--fsp-lime)}
+  .dock .slider::after{content:"";position:absolute;left:14px;right:14px;bottom:-1px;height:3px;border-radius:3px;background:var(--accent)}
   .seg{position:relative;z-index:1;min-width:64px;height:100%;padding:0 16px;display:flex;align-items:center;justify-content:center;gap:10px;
     border-radius:11px;color:rgba(255,255,255,.66);transition:color .25s;white-space:nowrap}
   .seg .n{font-family:var(--mono);font-size:13px;letter-spacing:.08em}
@@ -140,6 +141,24 @@
   #play .i-play{display:none}
   #play.paused .i-play{display:block}
   #play.paused .i-pause{display:none}
+  #paint[aria-expanded="true"]{background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.5)}
+
+  /* colourway chips: main + accent pairs, each design has its own orange version */
+  .colorway{position:fixed;right:var(--gx);bottom:calc(var(--gy) + var(--sb) + var(--dock-h) + 84px);z-index:6;
+    padding:12px 12px 10px;border-radius:14px;
+    background:rgba(6,18,70,.46);border:1px solid var(--line);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+    box-shadow:0 12px 34px rgba(4,12,48,.35)}
+  .colorway[hidden]{display:none}
+  .colorway .ttl{color:var(--muted);margin:0 4px 8px}
+  .cw-row{display:flex;gap:6px}
+  .cw{display:flex;flex-direction:column;align-items:center;gap:7px;width:64px;padding:8px 0 6px;border-radius:9px;
+    border:1px solid transparent;color:var(--muted);font-size:9px;letter-spacing:.08em;line-height:1.25;text-align:center;transition:background .2s,border-color .2s}
+  .cw i{display:flex;width:36px;height:22px;border-radius:5px;overflow:hidden;border:1px solid rgba(255,255,255,.3)}
+  .cw i b{flex:1.6;background:var(--a)}
+  .cw i b + b{flex:1;background:var(--b)}
+  .cw:hover{background:rgba(255,255,255,.07)}
+  .cw[aria-pressed="true"]{color:#fff;border-color:rgba(255,255,255,.55);background:rgba(255,255,255,.1)}
+  .cw:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
   /* ---------- loader ---------- */
   .loader{position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:22px;
@@ -156,14 +175,16 @@
     .seg{min-width:58px;padding:0 12px}
   }
   @media (max-width:1100px){
-    .tag{display:none}
+    .tag,.readout{display:none}
     .info{max-width:min(320px,34vw)}
+    .controls.many .nav{display:none}
+    /* the dock needs the whole bottom row: tools and colourway move up beside the info */
+    .tools{bottom:calc(var(--gy) + var(--sb) + var(--dock-h) + 16px)}
+    .colorway{bottom:calc(var(--gy) + var(--sb) + var(--dock-h) + 76px)}
   }
 
   /* ---------- tablets / small laptops ---------- */
   @media (max-width:960px){
-    .readout{display:none}
-    .controls.many .nav{display:none}
     :root{--word-y:38%}
   }
 
@@ -189,7 +210,8 @@
     .dock.many{overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:none;scroll-snap-type:x proximity}
     .dock.many::-webkit-scrollbar{display:none}
     .dock.many .seg{flex:0 0 56px;scroll-snap-align:center}
-    .tools{bottom:calc(var(--gy) + var(--sb) + var(--dock-h) + 16px)}
+    .tools{bottom:calc(var(--gy) + var(--sb) + var(--dock-h) + 16px);flex-direction:column}
+    .colorway{right:calc(var(--gx) + 54px);bottom:calc(var(--gy) + var(--sb) + var(--dock-h) + 16px)}
   }
   @media (max-width:380px){
     .intro h1{font-size:28px}
@@ -259,7 +281,14 @@
     <svg viewBox="0 0 18 18"><path d="m7 4 5 5-5 5"/></svg>
   </button>
 </nav>
+<div class="colorway mono" id="colorway" role="group" aria-label="Colourway">
+  <div class="ttl">Colourway</div>
+  <div class="cw-row" id="cwRow"></div>
+</div>
 <div class="tools">
+  <button class="icon" id="paint" aria-label="Colourway" title="Colourway" aria-controls="colorway" aria-expanded="false">
+    <svg viewBox="0 0 18 18"><path d="M3 3h5v5H3zM10 3h5v5h-5zM3 10h5v5H3zM10 10h5v5h-5z"/></svg>
+  </button>
   <button class="icon" id="reset" aria-label="Reset view" title="Reset view">
     <svg viewBox="0 0 18 18"><path d="M3.5 9a5.5 5.5 0 1 0 1.6-3.9"/><path d="M3.5 3v3.5H7"/></svg>
   </button>
@@ -283,7 +312,7 @@ const $ = id => document.getElementById(id);
 // Bump ASSETS (and the ?v= on racebird.glb) when a livery or the model changes:
 // vercel.json lets browsers cache these files for a day. (No ?v= on the .hdr:
 // model-viewer picks its loader from the file extension.)
-const ASSETS = '14';
+const ASSETS = '15';
 const VERSIONS = [
   { id:'wake',        tab:'01', label:'Pixel Wake',  desc:'A solid blue stern breaks forward into FSP pixel blocks behind a lime edge.' },
   { id:'telemetry',   tab:'02', label:'Telemetry',   desc:'White hull, a blue waterline sweep and the FSP ASCII hero across the nose.' },
@@ -295,7 +324,7 @@ const VERSIONS = [
   { id:'strike',      tab:'08', label:'Strike',      desc:'Blue, navy and lime racing stripes slash across the bow with hard pointed tips.' },
   { id:'blade',       tab:'09', label:'Blade',       desc:'Twin FSP-blue blades fold over the gunwale into a sharp spear at the nose.' },
   { id:'shard',       tab:'10', label:'Shard',       desc:'A faceted blue spearhead shatters over the bow, its shards flying back along the hull.' },
-].map(v => ({ ...v, file:`./liveries/fsp-${v.id}.png?v=${ASSETS}` }));
+].map(v => ({ ...v, file:`./liveries/fsp-${v.id}.png?v=${ASSETS}`, orange:`./liveries/fsp-${v.id}-orange.png?v=${ASSETS}` }));
 $('infoAll').textContent = String(VERSIONS.length).padStart(2, '0');
 
 // Render at full resolution: by default model-viewer drops its resolution under load.
@@ -305,8 +334,7 @@ customElements.whenDefined('model-viewer').then(() => { customElements.get('mode
 // model's textures (model-viewer internals; a harmless no-op if they change).
 function sharpen(){
   try{
-    const key = Object.getOwnPropertySymbols(mv).find(s => s.description === 'scene');
-    const scene = key && mv[key];
+    const scene = sceneOf();
     if(!scene) return;
     scene.traverse(o => {
       const t = o.isMesh && o.material && o.material.map;
@@ -321,8 +349,8 @@ const want = (new URLSearchParams(location.search).get('v') || '').toLowerCase()
 const startIdx = Math.max(0, VERSIONS.findIndex(v => v.id === want || v.tab === want));
 
 let liveryMat = null;
-const cache = {};                                    // id -> Promise<texture>
-const texture = v => (cache[v.id] ||= mv.createTexture(v.file));
+const cache = {};                                    // id + texture set -> Promise<texture>
+const texture = (v, set) => (cache[v.id + set] ||= mv.createTexture(set === 'orange' ? v.orange : v.file));
 let current = -1;
 
 // ---------- giant livery name: fit to the width, capped by height ----------
@@ -390,11 +418,19 @@ async function apply(i){
   segs.forEach((s, idx) => { s.classList.toggle('active', idx === i); s.setAttribute('aria-pressed', idx === i); });
   moveSlider(i, first);
   showInfo(v, !first);
-  if(!first) history.replaceState(null, '', '?v=' + v.tab);
-  const tex = await texture(v);
-  if(current !== i) return;                         // a newer pick won the race
+  if(!first) syncURL();
+  await showLivery();
+}
+// put the current livery, in the current colourway, on the boat
+async function showLivery(){
+  const i = current, c = colourway;
+  let tex;
+  try{ tex = await texture(VERSIONS[i], c.texture); }
+  catch(e){ tex = await texture(VERSIONS[i], 'lime'); }   // no orange version yet: show the lime one
+  if(current !== i || colourway !== c) return;      // a newer pick won the race
   liveryMat.pbrMetallicRoughness.baseColorTexture.setTexture(tex);
   sharpen();
+  recolorLivery();
 }
 $('prev').addEventListener('click', () => apply(current - 1));
 $('next').addEventListener('click', () => apply(current + 1));
@@ -467,6 +503,117 @@ function readout(){
 }
 requestAnimationFrame(readout);
 
+// ---------- colourway ----------
+// Blue + lime and blue + orange are painted textures: each design has its own orange
+// version (livery-tools --variant=orange) where orange takes over a visible element.
+// The other two recolour the lime texture live on the GPU: the liveries are painted
+// from a fixed palette, so every texel is one palette colour or an anti-aliased blend
+// of two; a small shader finds that pair and swaps in the chosen colours.
+const SWATCHES = { blue:'#1450e6', orange:'#ff5b13', lime:'#c8f04a', dark:'#0a2540' };
+const COLOURWAYS = [
+  { label:'Blue<br>Lime',   a:'blue',   b:'lime',   texture:'lime' },
+  { label:'Blue<br>Orange', a:'blue',   b:'orange', texture:'orange' },
+  { label:'Orange<br>Blue', a:'orange', b:'blue',   texture:'lime', map:{ main:'orange', accent:'blue', dark:'dark' } },
+  { label:'Dark<br>Lime',   a:'dark',   b:'lime',   texture:'lime', map:{ main:'dark', accent:'lime', dark:'blue' } },
+];
+let colourway = COLOURWAYS[0];                        // every visit starts on blue + lime
+const rgb = h => [1, 3, 5].map(k => parseInt(h.slice(k, k + 2), 16) / 255);
+const mixc = (a, b, t) => a.map((x, k) => x + (b[k] - x) * t);
+function paletteMap(m){                              // [painted colour, shown colour]
+  const W = rgb('#f5f6f8'), M = rgb(SWATCHES[m.main]), A = rgb(SWATCHES[m.accent]), D = rgb(SWATCHES[m.dark]);
+  return [
+    [W, W],
+    [rgb('#1450e6'), M],
+    [rgb('#2d6ae3'), mixc(M, W, .12)],               // hero tint of the main colour
+    [rgb('#5b8def'), mixc(M, W, .33)],               // cool tint of the main colour
+    [rgb('#c8f04a'), A],
+    [rgb('#0a2540'), D],
+    [rgb('#0a0e16'), rgb('#0a0e16')],                // structure: hull bottom, foil arms, E1 logos
+  ];
+}
+let gl = null, glProg = null, glCanvas = null;
+function recolor(img, m){
+  if(!gl){
+    glCanvas = document.createElement('canvas');
+    gl = glCanvas.getContext('webgl', { premultipliedAlpha:false, preserveDrawingBuffer:true, antialias:false, alpha:false });
+    const sh = (type, src) => { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); return s; };
+    glProg = gl.createProgram();
+    gl.attachShader(glProg, sh(gl.VERTEX_SHADER, 'attribute vec2 p;void main(){gl_Position=vec4(p,0.,1.);}'));
+    gl.attachShader(glProg, sh(gl.FRAGMENT_SHADER, `precision highp float;
+      uniform sampler2D t;uniform vec2 sz;uniform vec3 src[7];uniform vec3 dst[7];
+      void main(){
+        vec3 c=texture2D(t,vec2(gl_FragCoord.x/sz.x,1.-gl_FragCoord.y/sz.y)).rgb,o=c;float best=1e9;
+        for(int i=0;i<7;i++)for(int j=0;j<7;j++){
+          if(j<i)continue;
+          vec3 a=src[i],ab=src[j]-a;float L=dot(ab,ab);
+          float k=L>0.?clamp(dot(c-a,ab)/L,0.,1.):0.;vec3 d=c-(a+ab*k);float e=dot(d,d);
+          if(e<best){best=e;o=mix(dst[i],dst[j],k);}
+        }
+        gl_FragColor=vec4(o,1.);
+      }`));
+    gl.bindAttribLocation(glProg, 0, 'p');
+    gl.linkProgram(glProg); gl.useProgram(glProg);
+    gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+    gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
+    for(const [k, v] of [[gl.TEXTURE_MIN_FILTER, gl.NEAREST], [gl.TEXTURE_MAG_FILTER, gl.NEAREST], [gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE], [gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE]]) gl.texParameteri(gl.TEXTURE_2D, k, v);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+    gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, gl.NONE);
+  }
+  const w = img.width, h = img.height, pal = paletteMap(m);
+  glCanvas.width = w; glCanvas.height = h; gl.viewport(0, 0, w, h);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, img);
+  gl.uniform2f(gl.getUniformLocation(glProg, 'sz'), w, h);
+  gl.uniform3fv(gl.getUniformLocation(glProg, 'src'), pal.flatMap(p => p[0]));
+  gl.uniform3fv(gl.getUniformLocation(glProg, 'dst'), pal.flatMap(p => p[1]));
+  gl.drawArrays(gl.TRIANGLES, 0, 3);
+  return glCanvas;
+}
+function sceneOf(){ const key = Object.getOwnPropertySymbols(mv).find(s => s.description === 'scene'); return key && mv[key]; }
+// Swap the livery texture's pixels for the recoloured canvas (model-viewer internals,
+// like sharpen(); if they change the colourway quietly stays at the default).
+function recolorLivery(){
+  try{
+    const scene = sceneOf(), maps = new Set();
+    if(!scene) return;
+    scene.traverse(o => { const m = o.isMesh && o.material; if(m && m.name === 'M_Racebird_Livery Default' && m.map) maps.add(m.map); });
+    const m = colourway.map;
+    for(const map of maps){
+      map.userData.fspOriginal ||= map.image;
+      const want = m ? recolor(map.userData.fspOriginal, m) : map.userData.fspOriginal;
+      if(map.image !== want || m){ map.image = want; map.needsUpdate = true; }
+    }
+    if(scene.queueRender) scene.queueRender();
+  }catch(e){ console.warn('colourway unavailable', e); }
+}
+function syncURL(){
+  if(current >= 0) history.replaceState(null, '', '?v=' + VERSIONS[current].tab);
+}
+// colourway chips
+const cw = $('colorway'), paintBtn = $('paint');
+for(const c of COLOURWAYS){
+  const b = document.createElement('button');
+  b.className = 'cw mono'; b.type = 'button';
+  b.innerHTML = `<i style="--a:${SWATCHES[c.a]};--b:${SWATCHES[c.b]}"><b></b><b></b></i><span>${c.label}</span>`;
+  b.setAttribute('aria-label', c.label.replace('<br>', ' and '));
+  b.addEventListener('click', () => setColourway(c));
+  $('cwRow').appendChild(b); c.btn = b;
+}
+function setColourway(c){
+  colourway = c;
+  COLOURWAYS.forEach(x => x.btn.setAttribute('aria-pressed', x === c));
+  // page accent follows the livery accent (white when the accent is blue)
+  document.documentElement.style.setProperty('--accent', c.b === 'blue' ? '#ffffff' : SWATCHES[c.b]);
+  if(current >= 0) showLivery();
+  if(c.texture === 'orange' && liveryMat) VERSIONS.forEach(v => texture(v, 'orange').catch(() => {}));   // warm the other orange versions
+}
+function setPanel(open){ cw.hidden = !open; paintBtn.setAttribute('aria-expanded', open); }
+paintBtn.addEventListener('click', () => setPanel(cw.hidden));
+setPanel(!mqPhone.matches && window.innerHeight > 560);   // open on desktop, behind the button on phones
+setColourway(colourway);
+
 // ---------- load ----------
 mv.addEventListener('progress', e => { $('bar').style.width = Math.round(e.detail.totalProgress * 100) + '%'; });
 mv.addEventListener('load', async () => {
@@ -474,7 +621,7 @@ mv.addEventListener('load', async () => {
   await apply(startIdx);                            // paint finish (clear coat) comes from racebird.glb
   setResponsiveView(true);                          // ensure correct hero framing once loaded
   $('loader').classList.add('hide');
-  VERSIONS.forEach(texture);                        // warm the other liveries for instant switching
+  VERSIONS.forEach(v => texture(v, 'lime'));       // warm the other liveries for instant switching
 });
 </script>
 </body>
