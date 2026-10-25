@@ -10,7 +10,7 @@
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-1 0 8.75 8.75' fill='%231450e6'%3E%3Crect width='2' height='2'/%3E%3Crect x='2.25' width='2' height='2'/%3E%3Crect x='4.5' width='2' height='2'/%3E%3Crect y='2.25' width='2' height='2'/%3E%3Crect y='4.5' width='2' height='2'/%3E%3Crect x='2.25' y='4.5' width='2' height='2'/%3E%3Crect y='6.75' width='2' height='2'/%3E%3C/svg%3E" />
 <link rel="preload" href="./fonts/Archivo-variable.woff2" as="font" type="font/woff2" crossorigin />
 <script type="module" src="./model-viewer.min.js"></script>
-<link rel="stylesheet" href="./hud.css?v=1" />
+<link rel="stylesheet" href="./hud.css?v=2" />
 <style>
   /* model credits (CC BY / MIT): in front so the link works */
   .credit{position:fixed;left:var(--gx);bottom:calc(var(--gy) + var(--sb) + 14px);z-index:6;max-width:240px;
@@ -18,6 +18,12 @@
   .credit:hover{color:#fff}
   @media (max-width:1100px){ .credit{bottom:auto;top:calc(var(--gy) + var(--st) + 52px);left:auto;right:var(--gx);text-align:right} }
   @media (max-width:760px){ .credit{max-width:160px;font-size:9px} }
+  /* print styles */
+  .st-row{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:0 0 12px}
+  .st{padding:8px 6px;border-radius:8px;border:1px solid var(--line);color:var(--muted);font-size:9.5px;letter-spacing:.1em;transition:background .2s,color .2s}
+  .st:hover{color:#fff;background:rgba(255,255,255,.07)}
+  .st[aria-pressed="true"]{background:#fff;color:var(--fsp-blue);border-color:#fff}
+  .st:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 </style>
 </head>
 <body>
@@ -74,6 +80,8 @@
   </button>
 </nav>
 <div class="colorway mono" id="colorway" role="group" aria-label="Colourway">
+  <div class="ttl">Style</div>
+  <div class="st-row" id="stRow"></div>
   <div class="ttl">Colourway</div>
   <div class="cw-row" id="cwRow"></div>
 </div>
@@ -104,17 +112,26 @@ const $ = id => document.getElementById(id);
 
 // Garments are painted by apparel/merch.mjs and built for the web by apparel/tools/web.mjs.
 // Bump ASSETS when they change (vercel.json caches them for a day).
-const ASSETS = '2';
+const ASSETS = '3';
 const ITEMS = [
-  { id:'jacket', tab:'01', label:'Jacket', file:'./merch/varsity.glb', orange:'./merch/varsity-orange.webp', mat:'FABRIC_1_FRONT_3990',
+  { id:'jacket', tab:'01', label:'Jacket', file:'./merch/varsity.glb', prints:'./merch/varsity', mat:'FABRIC_1_FRONT_3990',
     desc:'Team jacket: a navy-to-blue yoke, a lime raglan stripe and a halftone speed sweep.',
     credit:'“Varsity Jacket” by Sev · CC BY 4.0', href:'https://sketchfab.com/3d-models/varsity-jacket-40ee5970950b48b4a38d657dc671f007' },
-  { id:'hoodie', tab:'02', label:'Hoodie', file:'./merch/hoodie.glb', orange:'./merch/hoodie-orange.webp', mat:'uniform_1001',
+  { id:'hoodie', tab:'02', label:'Hoodie', file:'./merch/hoodie.glb', prints:'./merch/hoodie', mat:'uniform_1001',
     desc:'Oversized team hoodie: the same sweep, navy cuffs and a lime pinstripe hem.',
     credit:'“Green and white hoodie” by Style3D CG · CC BY 4.0', href:'https://sketchfab.com/3d-models/green-and-white-hoodie-af100701826e4bb9abc1ff1a1d24ab1e' },
-  { id:'tshirt', tab:'03', label:'T-shirt', file:'./merch/tshirt.glb', orange:'./merch/tshirt-orange.webp', mat:'lambert1',
+  { id:'tshirt', tab:'03', label:'T-shirt', file:'./merch/tshirt.glb', prints:'./merch/tshirt', mat:'lambert1',
     desc:'Sublimated team tee: a white chest band with the E1 and FSP marks over a fading blue sweep.',
     credit:'T-shirt model: Poimandres · MIT', href:'https://github.com/pmndrs/examples' },
+];
+// print styles (apparel/designs/*.mjs, built by apparel/tools/web.mjs as <garment>-<style>-<accent>.webp)
+const STYLES = [
+  { id:'track',     label:'Track',      desc:'Gradient yoke, lime raglan stripe and a halftone speed sweep.' },
+  { id:'pixelfade', label:'Pixel Fade', desc:'Navy-to-FSP-blue shoulders dissolving into a white body of FSP pixels.' },
+  { id:'circuit',   label:'Circuit',    desc:'Esports PCB kit: navy to FSP blue, light-blue traces and a lime signal bus.' },
+  { id:'split',     label:'Split',      desc:'A bold diagonal colour block: navy-to-blue field, white panel, lime split line.' },
+  { id:'shard',     label:'Shard',      desc:'Blue glass shards burst from the hem and shoulders, with two lime blades.' },
+  { id:'paddock',   label:'Paddock',    desc:'Navy paddock wear: FSP-blue side panels, sharp cuts, lime piping, F monogram.' },
 ];
 const SWATCHES = { blue:'#1450e6', orange:'#ff5b13', lime:'#c8f04a' };
 const COLOURWAYS = [
@@ -122,6 +139,8 @@ const COLOURWAYS = [
   { label:'Blue<br>Orange', a:'blue', b:'orange', print:'orange' },
 ];
 let colourway = COLOURWAYS[0];
+const params = new URLSearchParams(location.search);
+let style = STYLES.find(x => x.id === params.get('s')) || STYLES[0];
 $('infoAll').textContent = String(ITEMS.length).padStart(2, '0');
 customElements.whenDefined('model-viewer').then(() => { customElements.get('model-viewer').minimumRenderScale = 1; });
 
@@ -134,9 +153,9 @@ function sharpen(){                                   // 16x anisotropy on the p
   }catch(e){ /* keep the default filtering */ }
 }
 
-const want = (new URLSearchParams(location.search).get('g') || '').toLowerCase();
+const want = (params.get('g') || '').toLowerCase();
 const startIdx = Math.max(0, ITEMS.findIndex(g => g.id === want || g.tab === want));
-let current = -1, printMat = null, limeTex = null, orangeTex = null;
+let current = -1, printMat = null, limeTex = null, prints = new Map();   // url -> Promise<texture>, per loaded garment
 
 // ---------- giant name + info ----------
 const word = $('word'), wordText = $('wordText');
@@ -151,7 +170,7 @@ let infoTimer = 0;
 function showInfo(g, animate){
   const set = () => {
     wordText.textContent = g.label.toLowerCase(); fitWord();
-    $('infoNum').textContent = g.tab; $('infoName').textContent = g.label; $('infoDesc').textContent = g.desc;
+    $('infoNum').textContent = g.tab; $('infoName').textContent = `${g.label} · ${style.label}`; $('infoDesc').textContent = style.desc;
     $('credit').textContent = g.credit; $('credit').href = g.href;
     word.classList.remove('out'); $('info').classList.remove('out');
   };
@@ -186,8 +205,8 @@ function apply(i){
   segs.forEach((s, k) => { s.classList.toggle('active', k === i); s.setAttribute('aria-pressed', k === i); });
   moveSlider(i);
   showInfo(g, !first);
-  if(!first) history.replaceState(null, '', '?g=' + g.id);
-  printMat = limeTex = orangeTex = null;
+  if(!first) syncURL();
+  printMat = limeTex = null; prints = new Map();
   mv.src = `${g.file}?v=${ASSETS}`;                  // the print is applied on 'load'
 }
 $('prev').addEventListener('click', () => apply(current - 1));
@@ -202,15 +221,35 @@ document.addEventListener('keydown', e => {
 // ---------- colourway: lime print from the GLB, orange print swapped in ----------
 async function showPrint(){
   if(!printMat) return;
-  const c = colourway, g = ITEMS[current];
-  if(c.print === 'orange'){
-    orangeTex ||= mv.createTexture(`${g.orange}?v=${ASSETS}`);
-    const t = await orangeTex;
-    if(colourway !== c || ITEMS[current] !== g || !printMat) return;
-    printMat.pbrMetallicRoughness.baseColorTexture.setTexture(t);
-  } else if(limeTex) printMat.pbrMetallicRoughness.baseColorTexture.setTexture(limeTex);
+  const c = colourway, st = style, g = ITEMS[current];
+  let t = limeTex;
+  if(!(st.id === 'track' && c.print === 'lime')){
+    const url = `${g.prints}-${st.id}-${c.print}.webp?v=${ASSETS}`;
+    if(!prints.has(url)) prints.set(url, mv.createTexture(url));
+    t = await prints.get(url);
+  }
+  if(colourway !== c || style !== st || ITEMS[current] !== g || !printMat || !t) return;
+  printMat.pbrMetallicRoughness.baseColorTexture.setTexture(t);
   sharpen();
 }
+function syncURL(){
+  const q = new URLSearchParams({ g: ITEMS[current].id });
+  if(style !== STYLES[0]) q.set('s', style.id);
+  history.replaceState(null, '', '?' + q);
+}
+for(const st of STYLES){
+  const b = document.createElement('button');
+  b.className = 'st mono'; b.type = 'button'; b.textContent = st.label;
+  b.addEventListener('click', () => setStyle(st));
+  $('stRow').appendChild(b); st.btn = b;
+}
+function setStyle(st){
+  style = st;
+  STYLES.forEach(x => x.btn.setAttribute('aria-pressed', x === st));
+  if(current >= 0){ showInfo(ITEMS[current], true); syncURL(); }
+  showPrint();
+}
+setStyle(style);
 const cw = $('colorway'), paintBtn = $('paint');
 for(const c of COLOURWAYS){
   const b = document.createElement('button');

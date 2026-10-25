@@ -10,7 +10,7 @@
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-1 0 8.75 8.75' fill='%231450e6'%3E%3Crect width='2' height='2'/%3E%3Crect x='2.25' width='2' height='2'/%3E%3Crect x='4.5' width='2' height='2'/%3E%3Crect y='2.25' width='2' height='2'/%3E%3Crect y='4.5' width='2' height='2'/%3E%3Crect x='2.25' y='4.5' width='2' height='2'/%3E%3Crect y='6.75' width='2' height='2'/%3E%3C/svg%3E" />
 <link rel="preload" href="./fonts/Archivo-variable.woff2" as="font" type="font/woff2" crossorigin />
 <script type="module" src="./model-viewer.min.js"></script>
-<link rel="stylesheet" href="./hud.css?v=1" />
+<link rel="stylesheet" href="./hud.css?v=2" />
 </head>
 <body>
 
@@ -68,6 +68,12 @@
 <div class="colorway mono" id="colorway" role="group" aria-label="Colourway">
   <div class="ttl">Colourway</div>
   <div class="cw-row" id="cwRow"></div>
+  <div class="sp-row">
+    <span>Partner</span>
+    <button class="sp-toggle" id="spToggle" type="button" aria-pressed="true" aria-label="HRX partner logo">
+      <img src="./sponsors/hrx-logo.png" alt="HRX" /><i class="switch" aria-hidden="true"></i>
+    </button>
+  </div>
 </div>
 <div class="tools">
   <button class="icon" id="paint" aria-label="Colourway" title="Colourway" aria-controls="colorway" aria-expanded="false">
@@ -96,7 +102,7 @@ const $ = id => document.getElementById(id);
 // Bump ASSETS (and the ?v= on racebird.glb) when a livery or the model changes:
 // vercel.json lets browsers cache these files for a day. (No ?v= on the .hdr:
 // model-viewer picks its loader from the file extension.)
-const ASSETS = '15';
+const ASSETS = '16';
 const VERSIONS = [
   { id:'wake',        tab:'01', label:'Pixel Wake',  desc:'A solid blue stern breaks forward into FSP pixel blocks behind a lime edge.' },
   { id:'telemetry',   tab:'02', label:'Telemetry',   desc:'White hull, a blue waterline sweep and the FSP ASCII hero across the nose.' },
@@ -315,8 +321,11 @@ function paletteMap(m){                              // [painted colour, shown c
     [rgb('#0a0e16'), rgb('#0a0e16')],                // structure: hull bottom, foil arms, E1 logos
   ];
 }
-let gl = null, glProg = null, glCanvas = null;
-function recolor(img, m){
+let gl = null, glProg = null, glCanvas = null, glSponsor = null;
+// One full-screen pass over the livery texture: optional palette swap (the colourway),
+// then the optional partner logo: its light parts white on dark ground and ink on light
+// ground (judged per logo from 9 ground samples, after the swap), its red parts red.
+function recolor(img, m, sp){
   if(!gl){
     glCanvas = document.createElement('canvas');
     gl = glCanvas.getContext('webgl', { premultipliedAlpha:false, preserveDrawingBuffer:true, antialias:false, alpha:false });
@@ -324,14 +333,30 @@ function recolor(img, m){
     glProg = gl.createProgram();
     gl.attachShader(glProg, sh(gl.VERTEX_SHADER, 'attribute vec2 p;void main(){gl_Position=vec4(p,0.,1.);}'));
     gl.attachShader(glProg, sh(gl.FRAGMENT_SHADER, `precision highp float;
-      uniform sampler2D t;uniform vec2 sz;uniform vec3 src[7];uniform vec3 dst[7];
-      void main(){
-        vec3 c=texture2D(t,vec2(gl_FragCoord.x/sz.x,1.-gl_FragCoord.y/sz.y)).rgb,o=c;float best=1e9;
+      uniform sampler2D t;uniform sampler2D spm;uniform vec2 sz;uniform vec3 src[7];uniform vec3 dst[7];
+      uniform float mapOn;uniform float spOn;uniform vec2 spS[36];
+      vec3 mapc(vec3 c){
+        if(mapOn<.5)return c;
+        vec3 o=c;float best=1e9;
         for(int i=0;i<7;i++)for(int j=0;j<7;j++){
           if(j<i)continue;
           vec3 a=src[i],ab=src[j]-a;float L=dot(ab,ab);
           float k=L>0.?clamp(dot(c-a,ab)/L,0.,1.):0.;vec3 d=c-(a+ab*k);float e=dot(d,d);
           if(e<best){best=e;o=mix(dst[i],dst[j],k);}
+        }
+        return o;
+      }
+      void main(){
+        vec2 uv=vec2(gl_FragCoord.x/sz.x,1.-gl_FragCoord.y/sz.y);
+        vec3 o=mapc(texture2D(t,uv).rgb);
+        if(spOn>.5){
+          vec3 m=texture2D(spm,uv).rgb;
+          if(m.g+m.b>0.){
+            float id=floor(m.r*255./60.+.5)-1.,lum=0.;
+            for(int k=0;k<4;k++)if(float(k)==id)for(int j=0;j<9;j++)lum+=dot(mapc(texture2D(t,spS[k*9+j]).rgb),vec3(.2126,.7152,.0722));
+            vec3 ink=lum/9.<.5?vec3(.961,.965,.973):vec3(.039,.055,.086);
+            o=mix(o,ink,m.g);o=mix(o,vec3(.835,.169,.11),m.b);
+          }
         }
         gl_FragColor=vec4(o,1.);
       }`));
@@ -340,38 +365,53 @@ function recolor(img, m){
     gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
     gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
-    gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
-    for(const [k, v] of [[gl.TEXTURE_MIN_FILTER, gl.NEAREST], [gl.TEXTURE_MAG_FILTER, gl.NEAREST], [gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE], [gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE]]) gl.texParameteri(gl.TEXTURE_2D, k, v);
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
     gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
     gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, gl.NONE);
+    const tex = unit => { gl.activeTexture(gl.TEXTURE0 + unit); gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
+      for(const [k, v] of [[gl.TEXTURE_MIN_FILTER, gl.NEAREST], [gl.TEXTURE_MAG_FILTER, gl.NEAREST], [gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE], [gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE]]) gl.texParameteri(gl.TEXTURE_2D, k, v); };
+    tex(1); tex(0);
+    gl.uniform1i(gl.getUniformLocation(glProg, 't'), 0);
+    gl.uniform1i(gl.getUniformLocation(glProg, 'spm'), 1);
   }
-  const w = img.width, h = img.height, pal = paletteMap(m);
+  const w = img.width, h = img.height, pal = paletteMap(m || { main:'blue', accent:'lime', dark:'dark' });
   glCanvas.width = w; glCanvas.height = h; gl.viewport(0, 0, w, h);
+  gl.activeTexture(gl.TEXTURE0);
   gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, img);
+  if(sp && glSponsor !== sp.img){ gl.activeTexture(gl.TEXTURE1); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, sp.img); glSponsor = sp.img; gl.activeTexture(gl.TEXTURE0); }
   gl.uniform2f(gl.getUniformLocation(glProg, 'sz'), w, h);
   gl.uniform3fv(gl.getUniformLocation(glProg, 'src'), pal.flatMap(p => p[0]));
   gl.uniform3fv(gl.getUniformLocation(glProg, 'dst'), pal.flatMap(p => p[1]));
+  gl.uniform1f(gl.getUniformLocation(glProg, 'mapOn'), m ? 1 : 0);
+  gl.uniform1f(gl.getUniformLocation(glProg, 'spOn'), sp ? 1 : 0);
+  if(sp) gl.uniform2fv(gl.getUniformLocation(glProg, 'spS'), sp.samples);
   gl.drawArrays(gl.TRIANGLES, 0, 3);
   return glCanvas;
 }
 function sceneOf(){ const key = Object.getOwnPropertySymbols(mv).find(s => s.description === 'scene'); return key && mv[key]; }
 // Swap the livery texture's pixels for the recoloured canvas (model-viewer internals,
-// like sharpen(); if they change the colourway quietly stays at the default).
+// like sharpen(); if they change, the livery quietly stays as painted).
 function recolorLivery(){
   try{
     const scene = sceneOf(), maps = new Set();
     if(!scene) return;
     scene.traverse(o => { const m = o.isMesh && o.material; if(m && m.name === 'M_Racebird_Livery Default' && m.map) maps.add(m.map); });
-    const m = colourway.map;
+    const m = colourway.map, sp = sponsorOn && sponsor.ready ? sponsor : null;
     for(const map of maps){
       map.userData.fspOriginal ||= map.image;
-      const want = m ? recolor(map.userData.fspOriginal, m) : map.userData.fspOriginal;
-      if(map.image !== want || m){ map.image = want; map.needsUpdate = true; }
+      const want = m || sp ? recolor(map.userData.fspOriginal, m, sp) : map.userData.fspOriginal;
+      if(map.image !== want || m || sp){ map.image = want; map.needsUpdate = true; }
     }
     if(scene.queueRender) scene.queueRender();
   }catch(e){ console.warn('colourway unavailable', e); }
 }
+// ---------- partner logo (HRX): a UV mask made by livery-tools/sponsor.mjs, on by default ----------
+let sponsorOn = true;
+const sponsor = { img: new Image(), samples: null, ready: false };
+Promise.all([
+  new Promise((ok, no) => { sponsor.img.onload = ok; sponsor.img.onerror = no; sponsor.img.src = './sponsors/hrx.png?v=' + ASSETS; }),
+  fetch('./sponsors/hrx.json?v=' + ASSETS).then(r => r.json()).then(j => { sponsor.samples = new Float32Array(j.spots.flat(2)); }),
+]).then(() => { sponsor.ready = true; if(current >= 0) recolorLivery(); }).catch(e => console.warn('partner logo unavailable', e));
 function syncURL(){
   if(current >= 0) history.replaceState(null, '', '?v=' + VERSIONS[current].tab);
 }
@@ -393,6 +433,8 @@ function setColourway(c){
   if(current >= 0) showLivery();
   if(c.texture === 'orange' && liveryMat) VERSIONS.forEach(v => texture(v, 'orange').catch(() => {}));   // warm the other orange versions
 }
+const spBtn = $('spToggle');
+spBtn.addEventListener('click', () => { sponsorOn = !sponsorOn; spBtn.setAttribute('aria-pressed', sponsorOn); if(current >= 0) recolorLivery(); });
 function setPanel(open){ cw.hidden = !open; paintBtn.setAttribute('aria-expanded', open); }
 paintBtn.addEventListener('click', () => setPanel(cw.hidden));
 setPanel(!mqPhone.matches && window.innerHeight > 560);   // open on desktop, behind the button on phones
