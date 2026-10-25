@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta http-equiv="Cache-Control" content="no-store" />
+<meta name="theme-color" content="#1538b4" />
+<title>FSP · RaceBird Liveries</title>
+<meta name="description" content="FSP livery concepts for the E1 RaceBird: Pixel Wake, Telemetry, Fingerprint, Current and Negative." />
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-1 0 8.75 8.75' fill='%231450e6'%3E%3Crect width='2' height='2'/%3E%3Crect x='2.25' width='2' height='2'/%3E%3Crect x='4.5' width='2' height='2'/%3E%3Crect y='2.25' width='2' height='2'/%3E%3Crect y='4.5' width='2' height='2'/%3E%3Crect x='2.25' y='4.5' width='2' height='2'/%3E%3Crect y='6.75' width='2' height='2'/%3E%3C/svg%3E" />
+<link rel="preload" href="./fonts/Archivo-variable.woff2" as="font" type="font/woff2" crossorigin />
+<script type="module" src="./model-viewer.min.js"></script>
+<style>
+  /* Archivo and Azeret Mono, self-hosted from the FSP production site (futureofsports.io) */
+  @font-face{
+    font-family:'FSP Archivo';
+    src:url('./fonts/Archivo-variable.woff2') format('woff2');
+    font-weight:100 900;font-stretch:62% 125%;font-style:normal;font-display:swap;
+  }
+  @font-face{
+    font-family:'FSP Mono';
+    src:url('./fonts/AzeretMono-variable.woff2') format('woff2');
+    font-weight:100 900;font-style:normal;font-display:swap;
+  }
+  :root{
+    --fsp-blue:#1450e6; --fsp-ink:#0a0e16; --fsp-lime:#c8f04a;
+    --text:#fff; --muted:rgba(255,255,255,.72); --dim:rgba(255,255,255,.46); --line:rgba(255,255,255,.18);
+    --font:'FSP Archivo',Archivo,system-ui,-apple-system,'Segoe UI',sans-serif;
+    --mono:'FSP Mono','Azeret Mono',ui-monospace,Menlo,Consolas,monospace;
+    --gx:clamp(16px,2.4vw,36px);                    /* side gutter */
+    --gy:clamp(14px,2.8vh,30px);                    /* top / bottom gutter */
+    --st:env(safe-area-inset-top,0px); --sb:env(safe-area-inset-bottom,0px);
+    --vh:100vh;
+    --dock-h:58px;
+    --word-y:40%;                                   /* centre line of the giant livery name */
+  }
+  @supports (height:100dvh){ :root{ --vh:100dvh } }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:var(--font);color:var(--text);overflow:hidden;position:relative;
+    -webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;
+    /* FSP blue studio: deep blue cyclorama, a soft light spot behind the boat and a
+       faint pixel grid (the boat's floor shadow renders onto it) */
+    background:
+      radial-gradient(55% 45% at 50% 42%, rgba(120,160,255,.16) 0%, rgba(120,160,255,0) 70%),
+      linear-gradient(rgba(255,255,255,.05) 1px, transparent 1px) 0 0/64px 64px,
+      linear-gradient(90deg, rgba(255,255,255,.05) 1px, transparent 1px) 0 0/64px 64px,
+      linear-gradient(180deg, #1c49d6 0%, #1538b4 45%, #0d2580 78%, #091a5e 100%) #1238b0;
+  }
+  button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+  .mono{font-family:var(--mono);font-weight:400;font-size:11px;letter-spacing:.16em;text-transform:uppercase}
+
+  /* =====================================================================
+     Layer 0, behind the boat: every piece of text and the HUD frame.
+     Layer 1: the boat (model-viewer, transparent). Layer 2: the controls.
+     ===================================================================== */
+  .backdrop{position:fixed;left:0;top:0;width:100%;height:var(--vh);z-index:0;pointer-events:none;user-select:none;-webkit-user-select:none}
+
+  /* HUD frame: corner brackets + centre ticks */
+  .frame i{position:absolute;width:14px;height:14px;border:0 solid rgba(255,255,255,.38)}
+  .frame i:nth-child(1){left:calc(var(--gx) - 10px);top:calc(var(--gy) - 8px + var(--st));border-width:1px 0 0 1px}
+  .frame i:nth-child(2){right:calc(var(--gx) - 10px);top:calc(var(--gy) - 8px + var(--st));border-width:1px 1px 0 0}
+  .frame i:nth-child(3){left:calc(var(--gx) - 10px);bottom:calc(var(--gy) - 8px + var(--sb));border-width:0 0 1px 1px}
+  .frame i:nth-child(4){right:calc(var(--gx) - 10px);bottom:calc(var(--gy) - 8px + var(--sb));border-width:0 1px 1px 0}
+  .frame b{position:absolute;left:50%;width:1px;height:10px;background:rgba(255,255,255,.38)}
+  .frame b:nth-of-type(1){top:calc(var(--gy) - 8px + var(--st))}
+
+  /* top bar */
+  .brand{position:absolute;left:var(--gx);top:calc(var(--gy) + var(--st));display:flex;align-items:center;gap:14px}
+  .brand img{height:32px;width:auto;display:block}
+  .brand .t1{font-weight:600;letter-spacing:.14em;font-size:15px;text-transform:uppercase;line-height:1}
+  .brand .t2{color:var(--muted);margin-top:5px;font-size:10.5px}
+  .tag{position:absolute;right:var(--gx);top:calc(var(--gy) + var(--st));text-align:right;line-height:1.7;color:var(--muted)}
+  .tag b{color:var(--text);font-weight:500}
+
+  /* title */
+  .intro{position:absolute;left:var(--gx);top:calc(var(--gy) + var(--st) + 84px)}
+  .kicker{display:inline-flex;align-items:center;gap:10px;color:var(--muted)}
+  .kicker::before{content:"";width:8px;height:8px;background:var(--fsp-lime)}
+  .intro h1{font-weight:200;text-transform:lowercase;letter-spacing:-.06em;line-height:.9;font-size:clamp(40px,4.6vw,76px);margin-top:12px}
+  .intro h1 .accent{color:var(--fsp-lime)}
+
+  /* the giant livery name the boat sits in front of */
+  .word{position:absolute;left:0;right:0;top:var(--word-y);transform:translateY(-50%);display:flex;justify-content:center;
+    font-weight:200;letter-spacing:-.065em;line-height:1;text-transform:lowercase;white-space:nowrap}
+  .word span{display:block;padding:0 .08em .06em 0;font-size:16vw;
+    background:linear-gradient(180deg,rgba(255,255,255,.98) 0%,rgba(255,255,255,.92) 48%,rgba(190,210,255,.5) 100%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    transition:opacity .45s ease,transform .7s cubic-bezier(.16,.84,.2,1),filter .45s ease}
+  .word.out span{opacity:0;transform:translateY(.12em);filter:blur(6px);transition-duration:.2s,.2s,.2s}
+
+  /* livery info, bottom left */
+  .info{position:absolute;left:var(--gx);bottom:calc(var(--gy) + var(--sb) + var(--dock-h) + 22px);max-width:min(380px,32vw)}
+  .info .count{display:flex;align-items:center;gap:10px;color:var(--muted)}
+  .info .count b{color:var(--fsp-lime);font-weight:500}
+  .info .count i{display:block;width:34px;height:1px;background:var(--line)}
+  .info .name{font-weight:500;font-size:clamp(22px,1.9vw,30px);letter-spacing:-.02em;line-height:1.1;margin:10px 0 8px}
+  .info .desc{color:var(--muted);font-size:14px;line-height:1.5}
+  .info > *{transition:opacity .35s ease,transform .5s cubic-bezier(.16,.84,.2,1)}
+  .info.out > *{opacity:0;transform:translateY(6px);transition-duration:.15s}
+
+  /* camera readout + hint, bottom right */
+  .readout{position:absolute;right:var(--gx);bottom:calc(var(--gy) + var(--sb) + var(--dock-h) + 22px);text-align:right;color:var(--dim);line-height:2}
+  .readout b{color:var(--text);font-weight:400;display:inline-block;min-width:4ch;text-align:right}
+
+  /* =====================================================================
+     Layer 1: the boat
+     ===================================================================== */
+  model-viewer{position:fixed;left:0;top:0;width:100vw;height:var(--vh);z-index:1;--poster-color:transparent;background:transparent;outline:none}
+
+  /* =====================================================================
+     Layer 2: controls
+     ===================================================================== */
+  .controls{position:fixed;left:50%;bottom:calc(var(--gy) + var(--sb));transform:translateX(-50%);z-index:6;display:flex;align-items:center;gap:10px}
+  .dock{position:relative;display:flex;padding:6px;border-radius:16px;height:var(--dock-h);
+    background:rgba(6,18,70,.42);border:1px solid var(--line);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+    box-shadow:0 12px 34px rgba(4,12,48,.35)}
+  .dock .slider{position:absolute;top:6px;left:0;height:calc(100% - 12px);border-radius:11px;
+    background:#fff;box-shadow:0 6px 18px rgba(4,12,48,.3);z-index:0;
+    transition:transform .38s cubic-bezier(.34,0,.18,1), width .38s cubic-bezier(.34,0,.18,1)}
+  .dock .slider::after{content:"";position:absolute;left:14px;right:14px;bottom:-1px;height:3px;border-radius:3px;background:var(--fsp-lime)}
+  .seg{position:relative;z-index:1;min-width:64px;height:100%;padding:0 16px;display:flex;align-items:center;justify-content:center;gap:10px;
+    border-radius:11px;color:rgba(255,255,255,.66);transition:color .25s;white-space:nowrap}
+  .seg .n{font-family:var(--mono);font-size:13px;letter-spacing:.08em}
+  .seg .l{font-weight:600;font-size:12px;letter-spacing:.14em;text-transform:uppercase}
+  .seg:hover{color:#fff}
+  .seg.active{color:var(--fsp-blue)}
+  .seg:focus-visible,.icon:focus-visible{outline:2px solid var(--fsp-lime);outline-offset:2px}
+  .icon{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;flex:none;
+    background:rgba(6,18,70,.42);border:1px solid var(--line);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+    transition:background .2s,border-color .2s}
+  .icon:hover{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.4)}
+  .icon svg{width:18px;height:18px;stroke:#fff;fill:none;stroke-width:1.6;stroke-linecap:square}
+  .tools{position:fixed;right:var(--gx);bottom:calc(var(--gy) + var(--sb) + 6px);z-index:6;display:flex;gap:8px}
+  .tools .icon{width:44px;height:44px}
+  #play .i-play{display:none}
+  #play.paused .i-play{display:block}
+  #play.paused .i-pause{display:none}
+
+  /* ---------- loader ---------- */
+  .loader{position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:22px;
+    background:#1238b0;transition:opacity .6s;opacity:1}
+  .loader.hide{opacity:0;pointer-events:none}
+  .loader img{height:46px;width:auto}
+  .loader .bar{width:160px;height:2px;background:rgba(255,255,255,.2);overflow:hidden}
+  .loader .bar i{display:block;height:100%;width:0;background:var(--fsp-lime);transition:width .25s}
+  .loader p{color:var(--muted)}
+
+  /* ---------- names only where the dock has room ---------- */
+  @media (max-width:1279px){
+    .seg .l{display:none}
+    .seg{min-width:58px;padding:0 12px}
+  }
+  @media (max-width:1100px){
+    .tag{display:none}
+    .info{max-width:min(320px,34vw)}
+  }
+
+  /* ---------- tablets / small laptops ---------- */
+  @media (max-width:960px){
+    .readout{display:none}
+    :root{--word-y:38%}
+  }
+
+  /* ---------- phones ---------- */
+  @media (max-width:760px){
+    :root{--dock-h:54px;--word-y:31%}
+    .frame,.readout,.tag,.nav,#play{display:none}
+    .brand img{height:26px}
+    .brand .t1{font-size:13px}
+    .brand .t2{font-size:9.5px;margin-top:4px}
+    .intro{top:calc(var(--gy) + var(--st) + 58px)}
+    .intro .kicker{font-size:10px}
+    .intro h1{font-size:clamp(30px,9vw,46px);margin-top:8px}
+    .info{left:var(--gx);right:calc(var(--gx) + 56px);max-width:none;bottom:calc(var(--gy) + var(--sb) + var(--dock-h) + 16px)}
+    .info .name{font-size:22px;margin:8px 0 4px}
+    .info .desc{font-size:13px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+    .controls{left:var(--gx);right:var(--gx);transform:none}
+    .dock{flex:1;padding:5px}
+    .dock .slider{top:5px;height:calc(100% - 10px)}
+    .seg{flex:1;min-width:0;padding:0}
+    .seg .n{font-size:14px}
+    .tools{bottom:calc(var(--gy) + var(--sb) + var(--dock-h) + 16px)}
+  }
+  @media (max-width:380px){
+    .intro h1{font-size:28px}
+    .brand .t2{display:none}
+  }
+
+  /* ---------- short / landscape phones ---------- */
+  @media (max-height:560px){
+    .intro,.info .desc{display:none}
+    :root{--word-y:36%}
+  }
+
+  @media (prefers-reduced-motion:reduce){
+    .word span,.info > *,.dock .slider,.loader{transition:none}
+  }
+</style>
+</head>
+<body>
+
+<!-- Layer 0: text and HUD, behind the boat -->
+<div class="backdrop">
+  <div class="frame" aria-hidden="true"><i></i><i></i><i></i><i></i><b></b></div>
+
+  <div class="brand">
+    <img src="./images/fsp-f-white.svg" alt="FSP" />
+    <div>
+      <div class="t1">FSP</div>
+      <div class="t2 mono">E1 · RaceBird</div>
+    </div>
+  </div>
+  <div class="tag mono"><b>Global competition, solved.</b><br />Powered by AI, ranked worldwide.</div>
+
+  <div class="intro">
+    <span class="kicker mono">Livery concepts</span>
+    <h1>fsp <span class="accent">racebird.</span></h1>
+  </div>
+
+  <div class="word" id="word" aria-hidden="true"><span id="wordText"></span></div>
+
+  <div class="info" id="info" aria-live="polite">
+    <div class="count mono"><span>Livery</span><b id="infoNum">01</b><i></i><span id="infoAll">05</span></div>
+    <div class="name" id="infoName"></div>
+    <p class="desc" id="infoDesc"></p>
+  </div>
+
+  <div class="readout mono" aria-hidden="true">
+    <div>HDG <b id="hdg">000°</b> · EL <b id="elv">00°</b></div>
+    <div>Drag to orbit · Scroll to zoom · ← → switch</div>
+  </div>
+</div>
+
+<!-- Layer 1: the boat -->
+<model-viewer id="mv" src="./racebird.glb?v=10" alt="FSP RaceBird"
+  camera-controls touch-action="none" interaction-prompt="none"
+  auto-rotate auto-rotate-delay="0" rotation-per-second="14deg"
+  shadow-intensity="1" shadow-softness="0.45" exposure="0.82" tone-mapping="commerce"
+  environment-image="./env/studio.hdr"
+  camera-orbit="45deg 72deg 110%" min-field-of-view="6deg" max-field-of-view="40deg"></model-viewer>
+
+<!-- Layer 2: controls -->
+<nav class="controls" id="controls" aria-label="Livery">
+  <button class="icon nav" id="prev" aria-label="Previous livery">
+    <svg viewBox="0 0 18 18"><path d="M11 4 6 9l5 5"/></svg>
+  </button>
+  <div class="dock" id="dock" role="group" aria-label="Choose a livery"></div>
+  <button class="icon nav" id="next" aria-label="Next livery">
+    <svg viewBox="0 0 18 18"><path d="m7 4 5 5-5 5"/></svg>
+  </button>
+</nav>
+<div class="tools">
+  <button class="icon" id="reset" aria-label="Reset view" title="Reset view">
+    <svg viewBox="0 0 18 18"><path d="M3.5 9a5.5 5.5 0 1 0 1.6-3.9"/><path d="M3.5 3v3.5H7"/></svg>
+  </button>
+  <button class="icon" id="play" aria-label="Pause rotation" title="Pause rotation">
+    <svg class="i-pause" viewBox="0 0 18 18"><path d="M6.5 4v10M11.5 4v10"/></svg>
+    <svg class="i-play" viewBox="0 0 18 18"><path d="M6 4v10l8-5z"/></svg>
+  </button>
+</div>
+
+<div class="loader" id="loader">
+  <img src="./images/fsp-f-white.svg" alt="" />
+  <div class="bar"><i id="bar"></i></div>
+  <p class="mono">Loading RaceBird</p>
+</div>
+
+<script>
+const mv = document.getElementById('mv');
+const dock = document.getElementById('dock');
+const $ = id => document.getElementById(id);
+
+// Bump ASSETS (and the ?v= on racebird.glb) when a livery or the model changes:
+// vercel.json lets browsers cache these files for a day. (No ?v= on the .hdr:
+// model-viewer picks its loader from the file extension.)
+const ASSETS = '13';
+const VERSIONS = [
+  { id:'wake',        tab:'01', label:'Pixel Wake',  desc:'A solid blue stern breaks forward into FSP pixel blocks behind a lime edge.' },
+  { id:'telemetry',   tab:'02', label:'Telemetry',   desc:'White hull, a blue waterline sweep and the FSP ASCII hero across the nose.' },
+  { id:'fingerprint', tab:'03', label:'Fingerprint', desc:'The FSP fingerprint pressed into the front deck around a white pixel F.' },
+  { id:'current',     tab:'04', label:'Current',     desc:'Blue and lime ribbons flow from the stern into a pixel arrowhead.' },
+  { id:'negative',    tab:'05', label:'Negative',    desc:'A split-tone blade: blue on one side, white on the other, the 05 counterchanged.' },
+].map(v => ({ ...v, file:`./liveries/fsp-${v.id}.png?v=${ASSETS}` }));
+$('infoAll').textContent = String(VERSIONS.length).padStart(2, '0');
+
+// Render at full resolution: by default model-viewer drops its resolution under load.
+customElements.whenDefined('model-viewer').then(() => { customElements.get('model-viewer').minimumRenderScale = 1; });
+
+// Crisp livery graphics at grazing angles: raise anisotropic filtering on the
+// model's textures (model-viewer internals; a harmless no-op if they change).
+function sharpen(){
+  try{
+    const key = Object.getOwnPropertySymbols(mv).find(s => s.description === 'scene');
+    const scene = key && mv[key];
+    if(!scene) return;
+    scene.traverse(o => {
+      const t = o.isMesh && o.material && o.material.map;
+      if(t && t.anisotropy < 16){ t.anisotropy = 16; t.needsUpdate = true; }
+    });
+    if(scene.queueRender) scene.queueRender();
+  }catch(e){ /* keep the default filtering */ }
+}
+
+// Open on ?v=<id or number>, e.g. ?v=telemetry or ?v=02.
+const want = (new URLSearchParams(location.search).get('v') || '').toLowerCase();
+const startIdx = Math.max(0, VERSIONS.findIndex(v => v.id === want || v.tab === want));
+
+let liveryMat = null;
+const cache = {};                                    // id -> Promise<texture>
+const texture = v => (cache[v.id] ||= mv.createTexture(v.file));
+let current = -1;
+
+// ---------- giant livery name: fit to the width, capped by height ----------
+const word = $('word'), wordText = $('wordText');
+const mqPhone = window.matchMedia('(max-width: 760px)');
+function fitWord(){
+  wordText.style.fontSize = '100px';
+  const w = wordText.getBoundingClientRect().width;
+  if(!w) return;
+  const vh = window.innerHeight, vw = window.innerWidth;
+  const maxW = vw * (mqPhone.matches ? 0.94 : 0.9);
+  const maxH = vh * (mqPhone.matches ? 0.2 : 0.34);
+  wordText.style.fontSize = Math.min(100 * maxW / w, maxH) + 'px';
+}
+
+// ---------- livery info + name ----------
+let infoTimer = 0;
+function showInfo(v, animate){
+  const set = () => {
+    wordText.textContent = v.label.toLowerCase();
+    fitWord();
+    $('infoNum').textContent = v.tab;
+    $('infoName').textContent = v.label;
+    $('infoDesc').textContent = v.desc;
+    word.classList.remove('out'); $('info').classList.remove('out');
+  };
+  clearTimeout(infoTimer);
+  if(!animate){ set(); return; }
+  word.classList.add('out'); $('info').classList.add('out');
+  infoTimer = setTimeout(set, 200);
+}
+
+// ---------- switcher dock (segmented slider) ----------
+const slider = document.createElement('div');
+slider.className = 'slider';
+dock.appendChild(slider);
+const segs = VERSIONS.map((v, i) => {
+  const b = document.createElement('button');
+  b.className = 'seg';
+  b.innerHTML = `<span class="n">${v.tab}</span><span class="l">${v.label}</span>`;
+  b.title = v.label;
+  b.setAttribute('aria-label', `${v.tab} ${v.label}`);
+  b.addEventListener('click', () => { if(!swiped) apply(i); });
+  dock.appendChild(b);
+  return b;
+});
+function moveSlider(i){
+  const seg = segs[i];
+  slider.style.width = seg.offsetWidth + 'px';
+  slider.style.transform = 'translateX(' + seg.offsetLeft + 'px)';
+}
+window.addEventListener('resize', () => { if(current >= 0) moveSlider(current); fitWord(); });
+if(document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if(current >= 0) moveSlider(current); fitWord(); });
+
+async function apply(i){
+  i = (i + VERSIONS.length) % VERSIONS.length;
+  if(i === current || !liveryMat) return;
+  const v = VERSIONS[i], first = current < 0;
+  current = i;
+  segs.forEach((s, idx) => { s.classList.toggle('active', idx === i); s.setAttribute('aria-pressed', idx === i); });
+  moveSlider(i);
+  showInfo(v, !first);
+  if(!first) history.replaceState(null, '', '?v=' + v.tab);
+  const tex = await texture(v);
+  if(current !== i) return;                         // a newer pick won the race
+  liveryMat.pbrMetallicRoughness.baseColorTexture.setTexture(tex);
+  sharpen();
+}
+$('prev').addEventListener('click', () => apply(current - 1));
+$('next').addEventListener('click', () => apply(current + 1));
+document.addEventListener('keydown', e => {
+  if(e.altKey || e.ctrlKey || e.metaKey) return;
+  if(e.key === 'ArrowLeft') apply(current - 1);
+  else if(e.key === 'ArrowRight') apply(current + 1);
+  else if(/^[1-9]$/.test(e.key) && +e.key <= VERSIONS.length) apply(+e.key - 1);
+});
+
+// swipe left / right on the dock (phones)
+let swipeX = null, swipeY = 0, swiped = false;
+const controls = $('controls');
+controls.addEventListener('pointerdown', e => { swipeX = e.clientX; swipeY = e.clientY; swiped = false; });
+controls.addEventListener('pointerup', e => {
+  if(swipeX === null) return;
+  const dx = e.clientX - swipeX, dy = e.clientY - swipeY;
+  swipeX = null;
+  if(Math.abs(dx) > 44 && Math.abs(dx) > Math.abs(dy) * 1.5){ swiped = true; apply(current + (dx < 0 ? 1 : -1)); setTimeout(() => swiped = false, 0); }
+});
+
+// ---------- camera: responsive default view, reset, play / pause ----------
+// A dramatic diagonal hero on phones, a wide 3/4 turntable on desktop.
+const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+let paused = reduceMotion;
+function setResponsiveView(jump){
+  if(mqPhone.matches){
+    mv.setAttribute('camera-orbit', '118deg 43deg 100%');
+    mv.setAttribute('field-of-view', '25deg');
+    mv.removeAttribute('auto-rotate');              // hold the hero angle on phones
+  } else {
+    mv.setAttribute('camera-orbit', '45deg 72deg 110%');
+    mv.removeAttribute('field-of-view');
+    if(paused) mv.removeAttribute('auto-rotate'); else mv.setAttribute('auto-rotate', '');
+  }
+  if(jump && mv.jumpCameraToGoal) mv.jumpCameraToGoal();
+}
+setResponsiveView(false);                            // set initial framing before first paint
+mqPhone.addEventListener('change', () => { setResponsiveView(true); fitWord(); });
+$('reset').addEventListener('click', () => {
+  if(mv.resetTurntableRotation) mv.resetTurntableRotation(0);
+  setResponsiveView(false);                          // glide back rather than jump
+});
+const play = $('play');
+function setPaused(p){
+  paused = p;
+  play.classList.toggle('paused', p);
+  play.setAttribute('aria-label', p ? 'Resume rotation' : 'Pause rotation');
+  play.title = play.getAttribute('aria-label');
+  if(!mqPhone.matches){ if(p) mv.removeAttribute('auto-rotate'); else mv.setAttribute('auto-rotate', ''); }
+}
+play.addEventListener('click', () => setPaused(!paused));
+if(paused) setPaused(true);
+
+// HUD readout: viewing heading relative to the boat (turntable included) and elevation
+const hdg = $('hdg'), elv = $('elv');
+let lastRead = '';
+function readout(){
+  requestAnimationFrame(readout);
+  if(!mv.loaded || mqPhone.matches) return;
+  const o = mv.getCameraOrbit(), tt = mv.turntableRotation || 0;
+  let h = ((o.theta - tt) * 180 / Math.PI) % 360; if(h < 0) h += 360;
+  const e = Math.round(90 - o.phi * 180 / Math.PI);
+  const s = String(Math.round(h) % 360).padStart(3, '0') + '|' + e;
+  if(s === lastRead) return;
+  lastRead = s;
+  hdg.textContent = s.slice(0, 3) + '°';
+  elv.textContent = String(e).padStart(2, '0') + '°';
+}
+requestAnimationFrame(readout);
+
+// ---------- load ----------
+mv.addEventListener('progress', e => { $('bar').style.width = Math.round(e.detail.totalProgress * 100) + '%'; });
+mv.addEventListener('load', async () => {
+  liveryMat = mv.model.materials.find(m => m.name === 'M_Racebird_Livery Default');
+  await apply(startIdx);                            // paint finish (clear coat) comes from racebird.glb
+  setResponsiveView(true);                          // ensure correct hero framing once loaded
+  $('loader').classList.add('hide');
+  VERSIONS.forEach(texture);                        // warm the other liveries for instant switching
+});
+</script>
+</body>
+</html>
