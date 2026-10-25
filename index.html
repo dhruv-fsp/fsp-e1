@@ -127,6 +127,9 @@
   .seg:hover{color:#fff}
   .seg.active{color:var(--fsp-blue)}
   .seg:focus-visible,.icon:focus-visible{outline:2px solid var(--fsp-lime);outline-offset:2px}
+  /* more than six liveries: numbers only (the name is in the info panel and behind the boat) */
+  .dock.many .seg .l{display:none}
+  .dock.many .seg{min-width:54px;padding:0 10px}
   .icon{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;flex:none;
     background:rgba(6,18,70,.42);border:1px solid var(--line);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
     transition:background .2s,border-color .2s}
@@ -160,6 +163,7 @@
   /* ---------- tablets / small laptops ---------- */
   @media (max-width:960px){
     .readout{display:none}
+    .controls.many .nav{display:none}
     :root{--word-y:38%}
   }
 
@@ -181,6 +185,10 @@
     .dock .slider{top:5px;height:calc(100% - 10px)}
     .seg{flex:1;min-width:0;padding:0}
     .seg .n{font-size:14px}
+    /* many liveries: the tab strip scrolls sideways and keeps the active tab centred */
+    .dock.many{overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:none;scroll-snap-type:x proximity}
+    .dock.many::-webkit-scrollbar{display:none}
+    .dock.many .seg{flex:0 0 56px;scroll-snap-align:center}
     .tools{bottom:calc(var(--gy) + var(--sb) + var(--dock-h) + 16px)}
   }
   @media (max-width:380px){
@@ -275,13 +283,18 @@ const $ = id => document.getElementById(id);
 // Bump ASSETS (and the ?v= on racebird.glb) when a livery or the model changes:
 // vercel.json lets browsers cache these files for a day. (No ?v= on the .hdr:
 // model-viewer picks its loader from the file extension.)
-const ASSETS = '13';
+const ASSETS = '14';
 const VERSIONS = [
   { id:'wake',        tab:'01', label:'Pixel Wake',  desc:'A solid blue stern breaks forward into FSP pixel blocks behind a lime edge.' },
   { id:'telemetry',   tab:'02', label:'Telemetry',   desc:'White hull, a blue waterline sweep and the FSP ASCII hero across the nose.' },
   { id:'fingerprint', tab:'03', label:'Fingerprint', desc:'The FSP fingerprint pressed into the front deck around a white pixel F.' },
   { id:'current',     tab:'04', label:'Current',     desc:'Blue and lime ribbons flow from the stern into a pixel arrowhead.' },
   { id:'negative',    tab:'05', label:'Negative',    desc:'A split-tone blade: blue on one side, white on the other, the 05 counterchanged.' },
+  { id:'delta',       tab:'06', label:'Delta',       desc:'Hard-edged blocking: a navy saddle, blue shards and a blue delta nose with a lime pin.' },
+  { id:'chevron',     tab:'07', label:'Chevron',     desc:'Three FSP-blue speed chevrons charge at the nose, heaviest in front, lime-edged.' },
+  { id:'strike',      tab:'08', label:'Strike',      desc:'Blue, navy and lime racing stripes slash across the bow with hard pointed tips.' },
+  { id:'blade',       tab:'09', label:'Blade',       desc:'Twin FSP-blue blades fold over the gunwale into a sharp spear at the nose.' },
+  { id:'shard',       tab:'10', label:'Shard',       desc:'A faceted blue spearhead shatters over the bow, its shards flying back along the hull.' },
 ].map(v => ({ ...v, file:`./liveries/fsp-${v.id}.png?v=${ASSETS}` }));
 $('infoAll').textContent = String(VERSIONS.length).padStart(2, '0');
 
@@ -356,13 +369,18 @@ const segs = VERSIONS.map((v, i) => {
   dock.appendChild(b);
   return b;
 });
-function moveSlider(i){
+const MANY = VERSIONS.length > 6;
+dock.classList.toggle('many', MANY);
+$('controls').classList.toggle('many', MANY);
+const dockScrolls = () => dock.scrollWidth > dock.clientWidth + 1;
+function moveSlider(i, instant){
   const seg = segs[i];
   slider.style.width = seg.offsetWidth + 'px';
   slider.style.transform = 'translateX(' + seg.offsetLeft + 'px)';
+  if(dockScrolls()) dock.scrollTo({ left: seg.offsetLeft - (dock.clientWidth - seg.offsetWidth) / 2, behavior: instant ? 'auto' : 'smooth' });
 }
-window.addEventListener('resize', () => { if(current >= 0) moveSlider(current); fitWord(); });
-if(document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if(current >= 0) moveSlider(current); fitWord(); });
+window.addEventListener('resize', () => { if(current >= 0) moveSlider(current, true); fitWord(); });
+if(document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if(current >= 0) moveSlider(current, true); fitWord(); });
 
 async function apply(i){
   i = (i + VERSIONS.length) % VERSIONS.length;
@@ -370,7 +388,7 @@ async function apply(i){
   const v = VERSIONS[i], first = current < 0;
   current = i;
   segs.forEach((s, idx) => { s.classList.toggle('active', idx === i); s.setAttribute('aria-pressed', idx === i); });
-  moveSlider(i);
+  moveSlider(i, first);
   showInfo(v, !first);
   if(!first) history.replaceState(null, '', '?v=' + v.tab);
   const tex = await texture(v);
@@ -384,7 +402,7 @@ document.addEventListener('keydown', e => {
   if(e.altKey || e.ctrlKey || e.metaKey) return;
   if(e.key === 'ArrowLeft') apply(current - 1);
   else if(e.key === 'ArrowRight') apply(current + 1);
-  else if(/^[1-9]$/.test(e.key) && +e.key <= VERSIONS.length) apply(+e.key - 1);
+  else if(/^[0-9]$/.test(e.key)){ const n = e.key === '0' ? 10 : +e.key; if(n <= VERSIONS.length) apply(n - 1); }
 });
 
 // swipe left / right on the dock (phones)
@@ -393,6 +411,7 @@ const controls = $('controls');
 controls.addEventListener('pointerdown', e => { swipeX = e.clientX; swipeY = e.clientY; swiped = false; });
 controls.addEventListener('pointerup', e => {
   if(swipeX === null) return;
+  if(dockScrolls() && e.target.closest('.dock')){ swipeX = null; return; }   // a scrolling tab strip swipes itself
   const dx = e.clientX - swipeX, dy = e.clientY - swipeY;
   swipeX = null;
   if(Math.abs(dx) > 44 && Math.abs(dx) > Math.abs(dy) * 1.5){ swiped = true; apply(current + (dx < 0 ? 1 : -1)); setTimeout(() => swiped = false, 0); }

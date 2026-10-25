@@ -5,13 +5,21 @@ FSP RaceBird livery showcase.
 A static 3D showcase site (Google `<model-viewer>`) presenting FSP livery concepts
 for the E1 RaceBird in white, FSP blue and lime (the futureofsports.io production
 brand). Open the page, orbit/zoom the model, and switch liveries with the bottom bar,
-the arrow keys or 1–5:
+the arrow keys or 1–9 / 0:
 
 - **01 Pixel Wake**: blue stern breaking into FSP blocks with a lime edge, Future of Sports on the sides.
 - **02 Telemetry**: blue waterline sweep, Future of Sports running into a 05 data line, an ASCII-texture blue nose with the F in characters (the FSP site hero), lime LED blocks.
 - **03 Fingerprint**: FSP's fingerprint ridges looping round a white pixel F on the front deck, a lime scan band, 05 on the engine cover.
 - **04 Current**: blue ribbons sweeping from the stern into a V on the front deck, ending in a pixel arrowhead with a lime edge.
 - **05 Negative**: a split-tone blade, the front deck blue on one side and white on the other, with a counterchanged 05.
+
+Sharp, straight-edged set (F1 / E1 team style, no curves):
+
+- **06 Delta**: hard-edged blocking: a navy saddle, blue shards and a blue delta nose with a lime pin.
+- **07 Chevron**: three FSP-blue speed chevrons charge at the nose, heaviest in front, lime-edged.
+- **08 Strike**: blue, navy and lime racing stripes slash across the bow with hard pointed tips.
+- **09 Blade**: twin FSP-blue blades fold over the gunwale into a sharp spear at the nose.
+- **10 Shard**: a faceted blue spearhead shatters over the bow, its shards flying back along the hull.
 
 The E1 series logos sit in their original positions on every livery. The boat renders like a
 studio product shot: FSP-blue studio backdrop with a soft floor shadow, studio lighting
