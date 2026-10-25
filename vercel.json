@@ -3,7 +3,7 @@
   "outputDirectory": ".",
   "headers": [
     {
-      "source": "/(.*)\\.(glb|png|svg|js|otf|woff2)",
+      "source": "/(.*)\\.(glb|png|webp|svg|js|css|otf|woff2)",
       "headers": [
         { "key": "Cache-Control", "value": "public, max-age=86400" }
       ]
