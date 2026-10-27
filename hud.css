@@ -243,3 +243,13 @@ model-viewer{position:fixed;left:0;top:0;width:100vw;height:var(--vh);z-index:1;
 .chip-gold{display:block;width:30px;height:16px;border-radius:4px;background:linear-gradient(135deg,#8a6a2f,#efd08a 45%,#a9832f);opacity:.45;transition:opacity .2s}
 .sp-toggle[aria-pressed="true"] .chip-gold{opacity:1}
 .sp-name{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+
+/* partner logo options: layout + logo style */
+.sp-opts{margin:4px 4px 0}
+.sp-opts[hidden]{display:none}
+.sp-line{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:6px;color:var(--dim)}
+.chips{display:flex;gap:4px}
+.chip{padding:6px 8px;border-radius:7px;border:1px solid var(--line);color:var(--muted);font-size:9px;letter-spacing:.1em;transition:background .2s,color .2s}
+.chip:hover{color:#fff}
+.chip[aria-pressed="true"]{background:#fff;color:var(--fsp-blue);border-color:#fff}
+.chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}

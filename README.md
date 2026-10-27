@@ -36,12 +36,17 @@ Blue · Lime (default), Blue · Orange (each design's own orange version, `liver
 where orange `#FF5B13` takes over a visible element), Orange · Blue and Dark · Lime (the
 lime texture recoloured live on the GPU). Every visit starts on Blue · Lime.
 
-**Partner logo:** the HRX logo sits where F1's most-seen sponsor spots map onto the boat: big on
-both sides of the cockpit pod (the "engine cover"), beside the FSP F on both foil tops (the "rear
-wing"), and on the rear deck flanks. Its light parts turn white on dark ground and ink on light
-ground (judged per logo), the red tick stays red; the Partner switch in the colourway panel turns it
-on and off (on by default). It is a UV mask (`sponsors/hrx.png` + `hrx.json`) composited live, made
-by livery-tools `sponsor.mjs` from the official logo.
+**Partner logo:** the HRX logo sits where F1's most-seen sponsor spots map onto the boat. The
+Partner switch in the colourway panel turns it on and off (on by default) and picks:
+
+- **Layout**: Wing (cockpit pod sides, foil tops beside the F, rear deck flanks; default),
+  Arms (pod sides plus big on the dark foil arms), Full (every spot plus one on the hump behind
+  the cockpit) or Mini (pod sides only).
+- **Logo**: Classic (light parts white on dark ground and ink on light ground, judged per logo,
+  red tick stays red), Red (the whole logo in HRX red) or Mono (the whole logo white or ink).
+
+Each layout is a UV mask (`sponsors/hrx-<layout>.png` + `.json`) composited live, made by
+livery-tools `sponsor.mjs --layout=<layout>` from the official logo.
 
 **Gold cockpit:** the Cockpit switch paints the cockpit pod metallic satin gold, as on the original
 Team Blue Rising livery, on any livery and colourway (`masks/cockpit.png` + `cockpit-mr.png`, made by
