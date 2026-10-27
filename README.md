@@ -39,9 +39,9 @@ lime texture recoloured live on the GPU). Every visit starts on Blue · Lime.
 **Partner logo:** the HRX logo sits where F1's most-seen sponsor spots map onto the boat. The
 Partner switch in the colourway panel turns it on and off (on by default) and picks:
 
-- **Layout**: Wing (cockpit pod sides, foil tops beside the F, rear deck flanks; default),
-  Arms (pod sides plus big on the dark foil arms), Full (every spot plus one on the hump behind
-  the cockpit) or Mini (pod sides only).
+- **Layout**: Deck (cockpit pod sides and rear deck flanks; default), Arms (pod sides plus big
+  on the dark foil arms), Full (every spot plus one on the hump behind the cockpit) or Mini (pod
+  sides only). The blue foil tops carry only the FSP F.
 - **Logo**: Classic (light parts white on dark ground and ink on light ground, judged per logo,
   red tick stays red), Red (the whole logo in HRX red) or Mono (the whole logo white or ink).
 

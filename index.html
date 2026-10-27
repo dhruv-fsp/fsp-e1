@@ -112,7 +112,7 @@ const $ = id => document.getElementById(id);
 // Bump ASSETS (and the ?v= on racebird.glb) when a livery or the model changes:
 // vercel.json lets browsers cache these files for a day. (No ?v= on the .hdr:
 // model-viewer picks its loader from the file extension.)
-const ASSETS = '19';
+const ASSETS = '20';
 const VERSIONS = [
   { id:'wake',        tab:'01', label:'Pixel Wake',  desc:'A solid blue stern breaks forward into FSP pixel blocks behind a lime edge.' },
   { id:'telemetry',   tab:'02', label:'Telemetry',   desc:'White hull, a blue waterline sweep and the FSP ASCII hero across the nose.' },
@@ -450,8 +450,8 @@ async function setFinish(gold){                       // metallic satin pod whil
 }
 
 // ---------- partner logo (HRX): a UV mask made by livery-tools/sponsor.mjs, on by default ----------
-let sponsorOn = true, spLayout = 'wing', spStyle = 0;
-const SP_LAYOUTS = [['wing', 'Wing'], ['arms', 'Arms'], ['full', 'Full'], ['mini', 'Mini']];
+let sponsorOn = true, spLayout = 'deck', spStyle = 0;
+const SP_LAYOUTS = [['deck', 'Deck'], ['arms', 'Arms'], ['full', 'Full'], ['mini', 'Mini']];
 const SP_STYLES = [[0, 'Classic'], [1, 'Red'], [2, 'Mono']];
 const sponsors = {};                                  // layout -> { img, spots, ready, loading }
 function loadSponsor(l){
