@@ -6,11 +6,11 @@
 <meta http-equiv="Cache-Control" content="no-store" />
 <meta name="theme-color" content="#1538b4" />
 <title>FSP · RaceBird Liveries</title>
-<meta name="description" content="FSP livery concepts for the E1 RaceBird: Pixel Wake, Telemetry, Fingerprint, Current and Negative." />
+<meta name="description" content="FSP livery concepts for the E1 RaceBird: eleven liveries from Pixel Wake to Pixel Print, with colourways, a gold cockpit and the HRX partner logo." />
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-1 0 8.75 8.75' fill='%231450e6'%3E%3Crect width='2' height='2'/%3E%3Crect x='2.25' width='2' height='2'/%3E%3Crect x='4.5' width='2' height='2'/%3E%3Crect y='2.25' width='2' height='2'/%3E%3Crect y='4.5' width='2' height='2'/%3E%3Crect x='2.25' y='4.5' width='2' height='2'/%3E%3Crect y='6.75' width='2' height='2'/%3E%3C/svg%3E" />
 <link rel="preload" href="./fonts/Archivo-variable.woff2" as="font" type="font/woff2" crossorigin />
 <script type="module" src="./model-viewer.min.js"></script>
-<link rel="stylesheet" href="./hud.css?v=2" />
+<link rel="stylesheet" href="./hud.css?v=3" />
 </head>
 <body>
 
@@ -69,6 +69,12 @@
   <div class="ttl">Colourway</div>
   <div class="cw-row" id="cwRow"></div>
   <div class="sp-row">
+    <span>Cockpit</span>
+    <button class="sp-toggle" id="goldToggle" type="button" aria-pressed="false" aria-label="Gold cockpit">
+      <i class="chip-gold" aria-hidden="true"></i><span class="sp-name">Gold</span><i class="switch" aria-hidden="true"></i>
+    </button>
+  </div>
+  <div class="sp-row">
     <span>Partner</span>
     <button class="sp-toggle" id="spToggle" type="button" aria-pressed="true" aria-label="HRX partner logo">
       <img src="./sponsors/hrx-logo.png" alt="HRX" /><i class="switch" aria-hidden="true"></i>
@@ -102,7 +108,7 @@ const $ = id => document.getElementById(id);
 // Bump ASSETS (and the ?v= on racebird.glb) when a livery or the model changes:
 // vercel.json lets browsers cache these files for a day. (No ?v= on the .hdr:
 // model-viewer picks its loader from the file extension.)
-const ASSETS = '16';
+const ASSETS = '18';
 const VERSIONS = [
   { id:'wake',        tab:'01', label:'Pixel Wake',  desc:'A solid blue stern breaks forward into FSP pixel blocks behind a lime edge.' },
   { id:'telemetry',   tab:'02', label:'Telemetry',   desc:'White hull, a blue waterline sweep and the FSP ASCII hero across the nose.' },
@@ -114,6 +120,7 @@ const VERSIONS = [
   { id:'strike',      tab:'08', label:'Strike',      desc:'Blue, navy and lime racing stripes slash across the bow with hard pointed tips.' },
   { id:'blade',       tab:'09', label:'Blade',       desc:'Twin FSP-blue blades fold over the gunwale into a sharp spear at the nose.' },
   { id:'shard',       tab:'10', label:'Shard',       desc:'A faceted blue spearhead shatters over the bow, its shards flying back along the hull.' },
+  { id:'pixelprint',  tab:'11', label:'Pixel Print', desc:'The FSP fingerprint in pixels: staircase ridges loop a blue F core, lime scan band.' },
 ].map(v => ({ ...v, file:`./liveries/fsp-${v.id}.png?v=${ASSETS}`, orange:`./liveries/fsp-${v.id}-orange.png?v=${ASSETS}` }));
 $('infoAll').textContent = String(VERSIONS.length).padStart(2, '0');
 
@@ -321,11 +328,11 @@ function paletteMap(m){                              // [painted colour, shown c
     [rgb('#0a0e16'), rgb('#0a0e16')],                // structure: hull bottom, foil arms, E1 logos
   ];
 }
-let gl = null, glProg = null, glCanvas = null, glSponsor = null;
+let gl = null, glProg = null, glCanvas = null, glSponsor = null, glCockpit = null;
 // One full-screen pass over the livery texture: optional palette swap (the colourway),
-// then the optional partner logo: its light parts white on dark ground and ink on light
+// the optional gold cockpit, then the optional partner logo: its light parts white on dark ground and ink on light
 // ground (judged per logo from 9 ground samples, after the swap), its red parts red.
-function recolor(img, m, sp){
+function recolor(img, m, sp, gold){
   if(!gl){
     glCanvas = document.createElement('canvas');
     gl = glCanvas.getContext('webgl', { premultipliedAlpha:false, preserveDrawingBuffer:true, antialias:false, alpha:false });
@@ -334,7 +341,8 @@ function recolor(img, m, sp){
     gl.attachShader(glProg, sh(gl.VERTEX_SHADER, 'attribute vec2 p;void main(){gl_Position=vec4(p,0.,1.);}'));
     gl.attachShader(glProg, sh(gl.FRAGMENT_SHADER, `precision highp float;
       uniform sampler2D t;uniform sampler2D spm;uniform vec2 sz;uniform vec3 src[7];uniform vec3 dst[7];
-      uniform float mapOn;uniform float spOn;uniform vec2 spS[36];
+      uniform sampler2D ckm;uniform float mapOn;uniform float spOn;uniform float goldOn;uniform vec2 spS[54];
+      const vec3 GOLD=vec3(.788,.635,.353);
       vec3 mapc(vec3 c){
         if(mapOn<.5)return c;
         vec3 o=c;float best=1e9;
@@ -346,14 +354,17 @@ function recolor(img, m, sp){
         }
         return o;
       }
+      vec3 ground(vec2 uv){                   // the livery as shown: colourway, then the gold cockpit
+        return mix(mapc(texture2D(t,uv).rgb),GOLD,goldOn*texture2D(ckm,uv).r);
+      }
       void main(){
         vec2 uv=vec2(gl_FragCoord.x/sz.x,1.-gl_FragCoord.y/sz.y);
-        vec3 o=mapc(texture2D(t,uv).rgb);
+        vec3 o=ground(uv);
         if(spOn>.5){
           vec3 m=texture2D(spm,uv).rgb;
           if(m.g+m.b>0.){
-            float id=floor(m.r*255./60.+.5)-1.,lum=0.;
-            for(int k=0;k<4;k++)if(float(k)==id)for(int j=0;j<9;j++)lum+=dot(mapc(texture2D(t,spS[k*9+j]).rgb),vec3(.2126,.7152,.0722));
+            float id=floor(m.r*255./36.+.5)-1.,lum=0.;
+            for(int k=0;k<6;k++)if(float(k)==id)for(int j=0;j<9;j++)lum+=dot(ground(spS[k*9+j]),vec3(.2126,.7152,.0722));
             vec3 ink=lum/9.<.5?vec3(.961,.965,.973):vec3(.039,.055,.086);
             o=mix(o,ink,m.g);o=mix(o,vec3(.835,.169,.11),m.b);
           }
@@ -370,20 +381,23 @@ function recolor(img, m, sp){
     gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, gl.NONE);
     const tex = unit => { gl.activeTexture(gl.TEXTURE0 + unit); gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
       for(const [k, v] of [[gl.TEXTURE_MIN_FILTER, gl.NEAREST], [gl.TEXTURE_MAG_FILTER, gl.NEAREST], [gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE], [gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE]]) gl.texParameteri(gl.TEXTURE_2D, k, v); };
-    tex(1); tex(0);
+    tex(2); tex(1); tex(0);
     gl.uniform1i(gl.getUniformLocation(glProg, 't'), 0);
     gl.uniform1i(gl.getUniformLocation(glProg, 'spm'), 1);
+    gl.uniform1i(gl.getUniformLocation(glProg, 'ckm'), 2);
   }
   const w = img.width, h = img.height, pal = paletteMap(m || { main:'blue', accent:'lime', dark:'dark' });
   glCanvas.width = w; glCanvas.height = h; gl.viewport(0, 0, w, h);
   gl.activeTexture(gl.TEXTURE0);
   gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, img);
   if(sp && glSponsor !== sp.img){ gl.activeTexture(gl.TEXTURE1); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, sp.img); glSponsor = sp.img; gl.activeTexture(gl.TEXTURE0); }
+  if(gold && glCockpit !== gold.img){ gl.activeTexture(gl.TEXTURE2); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, gold.img); glCockpit = gold.img; gl.activeTexture(gl.TEXTURE0); }
   gl.uniform2f(gl.getUniformLocation(glProg, 'sz'), w, h);
   gl.uniform3fv(gl.getUniformLocation(glProg, 'src'), pal.flatMap(p => p[0]));
   gl.uniform3fv(gl.getUniformLocation(glProg, 'dst'), pal.flatMap(p => p[1]));
   gl.uniform1f(gl.getUniformLocation(glProg, 'mapOn'), m ? 1 : 0);
   gl.uniform1f(gl.getUniformLocation(glProg, 'spOn'), sp ? 1 : 0);
+  gl.uniform1f(gl.getUniformLocation(glProg, 'goldOn'), gold ? 1 : 0);
   if(sp) gl.uniform2fv(gl.getUniformLocation(glProg, 'spS'), sp.samples);
   gl.drawArrays(gl.TRIANGLES, 0, 3);
   return glCanvas;
@@ -396,15 +410,39 @@ function recolorLivery(){
     const scene = sceneOf(), maps = new Set();
     if(!scene) return;
     scene.traverse(o => { const m = o.isMesh && o.material; if(m && m.name === 'M_Racebird_Livery Default' && m.map) maps.add(m.map); });
-    const m = colourway.map, sp = sponsorOn && sponsor.ready ? sponsor : null;
+    const m = colourway.map, sp = sponsorOn && sponsor.ready ? sponsor : null, gold = goldOn && cockpit.ready ? cockpit : null;
     for(const map of maps){
       map.userData.fspOriginal ||= map.image;
-      const want = m || sp ? recolor(map.userData.fspOriginal, m, sp) : map.userData.fspOriginal;
-      if(map.image !== want || m || sp){ map.image = want; map.needsUpdate = true; }
+      const want = m || sp || gold ? recolor(map.userData.fspOriginal, m, sp, gold) : map.userData.fspOriginal;
+      if(map.image !== want || m || sp || gold){ map.image = want; map.needsUpdate = true; }
     }
+    setFinish(!!gold);
     if(scene.queueRender) scene.queueRender();
   }catch(e){ console.warn('colourway unavailable', e); }
 }
+// ---------- gold cockpit (like the TBR livery): pod mask + metal/roughness map from livery-tools/cockpit.mjs ----------
+let goldOn = false;
+const cockpit = { img: new Image(), ready: false, mr: null };
+function loadCockpit(){
+  if(cockpit.loading) return cockpit.loading;
+  return cockpit.loading = new Promise((ok, no) => { cockpit.img.onload = ok; cockpit.img.onerror = no; cockpit.img.src = './masks/cockpit.png?v=' + ASSETS; })
+    .then(() => { cockpit.ready = true; }).catch(e => console.warn('gold cockpit unavailable', e));
+}
+let finishGold = false;
+async function setFinish(gold){                       // metallic satin pod while gold is on
+  if(!liveryMat || gold === finishGold) return;
+  finishGold = gold;
+  const pbr = liveryMat.pbrMetallicRoughness;
+  if(gold){
+    cockpit.mr ||= mv.createTexture('./masks/cockpit-mr.png?v=' + ASSETS);
+    const t = await cockpit.mr;
+    if(!finishGold) return;
+    pbr.metallicRoughnessTexture.setTexture(t); pbr.setMetallicFactor(1); pbr.setRoughnessFactor(1);
+  } else {
+    pbr.metallicRoughnessTexture.setTexture(null); pbr.setMetallicFactor(0); pbr.setRoughnessFactor(0.35);
+  }
+}
+
 // ---------- partner logo (HRX): a UV mask made by livery-tools/sponsor.mjs, on by default ----------
 let sponsorOn = true;
 const sponsor = { img: new Image(), samples: null, ready: false };
@@ -433,6 +471,8 @@ function setColourway(c){
   if(current >= 0) showLivery();
   if(c.texture === 'orange' && liveryMat) VERSIONS.forEach(v => texture(v, 'orange').catch(() => {}));   // warm the other orange versions
 }
+const goldBtn = $('goldToggle');
+goldBtn.addEventListener('click', async () => { goldOn = !goldOn; goldBtn.setAttribute('aria-pressed', goldOn); if(goldOn) await loadCockpit(); if(current >= 0) recolorLivery(); });
 const spBtn = $('spToggle');
 spBtn.addEventListener('click', () => { sponsorOn = !sponsorOn; spBtn.setAttribute('aria-pressed', sponsorOn); if(current >= 0) recolorLivery(); });
 function setPanel(open){ cw.hidden = !open; paintBtn.setAttribute('aria-expanded', open); }
