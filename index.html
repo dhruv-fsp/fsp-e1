@@ -332,7 +332,7 @@ function paletteMap(m){                              // [painted colour, shown c
     [rgb('#0a0e16'), rgb('#0a0e16')],                // structure: hull bottom, foil arms, E1 logos
   ];
 }
-let gl = null, glProg = null, glCanvas = null, glSponsor = null, glCockpit = null;
+let gl = null, glProg = null, glCanvas = null, glSponsor = null, glCockpit = null, glOut = null;
 // One full-screen pass over the livery texture: optional palette swap (the colourway),
 // the optional gold cockpit, then the optional partner logo: its light parts white on dark ground and ink on light
 // ground (judged per logo on the CPU, see spotDark), its red parts red.
@@ -406,7 +406,12 @@ function recolor(img, m, sp, gold){
   gl.uniform1f(gl.getUniformLocation(glProg, 'goldOn'), gold ? 1 : 0);
   if(sp){ gl.uniform4fv(gl.getUniformLocation(glProg, 'spDark'), spotDark(img, m, gold, sp)); gl.uniform1f(gl.getUniformLocation(glProg, 'spStyle'), spStyle); }
   gl.drawArrays(gl.TRIANGLES, 0, 3);
-  return glCanvas;
+  // Hand three.js a 2D copy: on real GPUs Chrome re-reads a WebGL canvas source stale after
+  // its first upload, so later changes (gold, partner logo) never reached the boat.
+  if(!glOut) glOut = document.createElement('canvas');
+  if(glOut.width !== w || glOut.height !== h){ glOut.width = w; glOut.height = h; }
+  glOut.getContext('2d').drawImage(glCanvas, 0, 0);
+  return glOut;
 }
 function sceneOf(){ const key = Object.getOwnPropertySymbols(mv).find(s => s.description === 'scene'); return key && mv[key]; }
 // Swap the livery texture's pixels for the recoloured canvas (model-viewer internals,
